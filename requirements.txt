@@ -11,3 +11,4 @@ torch
 torchaudio
 librosa
 logmmse
+gradio

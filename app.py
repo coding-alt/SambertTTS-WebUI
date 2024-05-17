@@ -10,13 +10,12 @@ import csv
 import whisper
 import gradio as gr
 import soundfile as sf
+import sox
 
 os.system("pip install --upgrade Cython==0.29.35")
-os.system("pip install pysptk --no-build-isolation")
-os.system("pip install kantts -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html")
-os.system("pip install tts-autolabel -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html")
-
-import sox
+os.system("pip install pysptk==0.2.2 --no-build-isolation")
+os.system("pip install kantts==1.0.1 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html")
+os.system("pip install tts-autolabel==1.1.8 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html")
 
 def split_long_audio(model, filepaths, save_dir="data_dir", out_sr=44100):
     if isinstance(filepaths, str):
@@ -63,8 +62,8 @@ from modelscope.utils.audio.audio_utils import TtsTrainType
 
 pretrained_model_id = 'damo/speech_personal_sambert-hifigan_nsf_tts_zh-cn_pretrain_16k'
 
-dataset_id = "/home/user/app/output_training_data/"
-pretrain_work_dir = "/home/user/app/pretrain_work_dir/"
+dataset_id = "/data/SambertTTS-WebUI/output_training_data/"
+pretrain_work_dir = "/data/SambertTTS-WebUI/pretrain_work_dir/"
 
 
 def auto_label(Voicetoclone, VoiceMicrophone):
@@ -74,15 +73,15 @@ def auto_label(Voicetoclone, VoiceMicrophone):
         audio = Voicetoclone
         
     try:
-        split_long_audio(whisper_model, audio, "/home/user/app/test_wavs/")
-        input_wav = "/home/user/app/test_wavs/"
-        output_data = "/home/user/app/output_training_data/"
+        split_long_audio(whisper_model, audio, "/data/SambertTTS-WebUI/test_wavs/")
+        input_wav = "/data/SambertTTS-WebUI/test_wavs/"
+        output_data = "/data/SambertTTS-WebUI/output_training_data/"
         ret, report = run_auto_label(input_wav=input_wav, work_dir=output_data, resource_revision="v1.0.7")
     
     except Exception as e:
         print(e)
-    return "标注成功"
 
+    return "标注成功"
 
 
 def train(train_step):
@@ -122,8 +121,8 @@ import shutil
 import datetime
 
 def save_model(worked_dir,dest_dir):
-    worked_dir = "/home/user/app/pretrain_work_dir"
-    dest_dir = "/home/user/app/trained_model"
+    worked_dir = "/data/SambertTTS-WebUI/pretrain_work_dir"
+    dest_dir = "/data/SambertTTS-WebUI/trained_model"
 
     if os.listdir(worked_dir): 
 
@@ -174,13 +173,13 @@ def save_model(worked_dir,dest_dir):
                 else:
                     os.remove(item_path)
         
-        shutil.rmtree("/home/user/app/output_training_data")
-        shutil.rmtree("/home/user/app/pretrain_work_dir")
-        shutil.rmtree("/home/user/app/test_wavs")
+        shutil.rmtree("/data/SambertTTS-WebUI/output_training_data")
+        shutil.rmtree("/data/SambertTTS-WebUI/pretrain_work_dir")
+        shutil.rmtree("/data/SambertTTS-WebUI/test_wavs")
         
-        os.mkdir("/home/user/app/output_training_data")
-        os.mkdir("/home/user/app/pretrain_work_dir")
-        os.mkdir("/home/user/app/test_wavs")
+        os.mkdir("/data/SambertTTS-WebUI/output_training_data")
+        os.mkdir("/data/SambertTTS-WebUI/pretrain_work_dir")
+        os.mkdir("/data/SambertTTS-WebUI/test_wavs")
         
         return f"模型已成功保存为 {date_str}"
     else: 
@@ -191,7 +190,7 @@ import random
 
 def infer(text):
 
-  model_dir = "/home/user/app/pretrain_work_dir/"
+  model_dir = "/data/SambertTTS-WebUI/pretrain_work_dir/"
 
   test_infer_abs = {
       'voice_name':
@@ -253,7 +252,7 @@ def infer(text):
 
 def infer_custom(model_name, text, noise_level): 
 
-  custom_model_dir = os.path.join("/home/user/app/trained_model/", model_name) 
+  custom_model_dir = os.path.join("/data/SambertTTS-WebUI/trained_model/", model_name) 
 
   custom_infer_abs = {
       'voice_name':
@@ -314,7 +313,7 @@ def infer_custom(model_name, text, noise_level):
 
 
 
-trained_model = "/home/user/app/trained_model/"
+trained_model = "/data/SambertTTS-WebUI/trained_model/"
 
 
 def update_model_dropdown(inp3):
@@ -338,13 +337,13 @@ def rename_model(old_name, new_name):
 
 # 清除训练缓存
 def clear_cache(a):
-    shutil.rmtree("/home/user/app/output_training_data")
-    shutil.rmtree("/home/user/app/pretrain_work_dir")
-    shutil.rmtree("/home/user/app/test_wavs")
+    shutil.rmtree("/data/SambertTTS-WebUI/output_training_data")
+    shutil.rmtree("/data/SambertTTS-WebUI/pretrain_work_dir")
+    shutil.rmtree("/data/SambertTTS-WebUI/test_wavs")
 
-    os.mkdir("/home/user/app/output_training_data")
-    os.mkdir("/home/user/app/pretrain_work_dir")
-    os.mkdir("/home/user/app/test_wavs")
+    os.mkdir("/data/SambertTTS-WebUI/output_training_data")
+    os.mkdir("/data/SambertTTS-WebUI/pretrain_work_dir")
+    os.mkdir("/data/SambertTTS-WebUI/test_wavs")
     return "已清除缓存，请返回训练页面重新训练"
 
 
@@ -404,13 +403,11 @@ def Normal_De_Noise(noise_wav, noisemic_wav, noise_level):
 
   return filename + "denoise.wav"
 
-
-app = gr.Blocks()
+css = """footer {visibility: hidden}"""
+app = gr.Blocks(title="Sambert中文声音克隆", css=css, theme="Kasien/ali_theme_custom")
 
 with app:
-    gr.Markdown("# <center>🥳🎶🎡 - Sambert中文声音克隆</center>")
-    gr.Markdown("## <center>🌟 - 训练3分钟，推理10秒钟，中英真实拟声 </center>")
-    gr.Markdown("### <center>🌊 - 基于SambertHifiGan项目修改而来，添加两种降噪功能、模型管理功能等")
+    gr.Markdown("# <center>🎡 - Sambert中文声音克隆</center>")
 
     with gr.Tabs(): 
         with gr.TabItem("一键训练"): 
@@ -538,12 +535,7 @@ with app:
                 btn92 = gr.Button("清空缓存数据", variant="primary") 
             
             btn91.click(save_model, out1, out97) 
-            btn92.click(clear_cache, out1, out97)
-
-
-
-
-            
+            btn92.click(clear_cache, out1, out97)        
 
     with gr.Accordion("📒 使用指南", open=False):
         _ = f""" 如何使用此程序: 
@@ -560,14 +552,4 @@ with app:
             """
         gr.Markdown(dedent(_))
 
-
-    gr.Markdown("### <center>注意❗：请不要生成会对个人以及组织造成侵害的内容，此程序仅供科研、学习及个人娱乐使用。</center>")
-    gr.HTML('''
-        <div class="footer">
-                    <p>🌊🏞️🎶 - 江水东流急，滔滔无尽声。 明·顾璘
-                    </p>
-        </div>
-    ''')
-
-
-app.launch(show_error=True, share=False)
+app.launch(show_error=True, share=False, server_name="0.0.0.0")
